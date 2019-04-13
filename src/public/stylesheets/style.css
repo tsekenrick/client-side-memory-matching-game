@@ -18,3 +18,7 @@ div.card {
     border: 5px solid purple;
     margin: 10px;
 }
+
+p.hide {
+    visibility: hidden;
+}

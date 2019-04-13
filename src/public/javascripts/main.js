@@ -11,6 +11,20 @@ function createCard(eleName, attrObj) {
 }
 
 function startGame(cardCount, maxTurns, cardFaces) {
+    document.querySelector('button.reset-btn').textContent = "Quit";
+
+    // gameplay variables
+    const selectedCards = []; 
+    let turn = 0;
+    let matches = 0;
+
+    if(cardFaces.length !== cardCount) {
+        cardFaces = [];
+        for(let i = 0; i < cardCount/2; i++) {
+            cardFaces.push(i+1);
+            cardFaces.push(i+1);
+        }
+    }
 
     // hide and reveal appropriate elements
     const toShow = document.querySelectorAll('div.game, div.reset');
@@ -25,9 +39,14 @@ function startGame(cardCount, maxTurns, cardFaces) {
         rowCount--;
     }
     const colCount = cardCount/rowCount;
-    
 
+    // generate card divs and append them to the document
     const gameField = document.querySelector('div.game');
+    const turnCounter = document.createElement('h2');
+    turnCounter.setAttribute('id', 'turnCounter');
+    turnCounter.textContent = `TURN ${turn}/${maxTurns}`;
+    gameField.appendChild(turnCounter);
+
     for(let i = 0; i < rowCount; i++) {
         const br = document.createElement('br');
         gameField.appendChild(br);
@@ -36,13 +55,69 @@ function startGame(cardCount, maxTurns, cardFaces) {
             const rand = cardFaces[Math.floor(Math.random() * cardFaces.length)];
             cardFaces.splice(cardFaces.indexOf(rand), 1);
             cardToAdd.children[0].textContent = rand;
+            cardToAdd.children[0].classList.add('hide');
+            cardToAdd.addEventListener('click', function selectCard() {
+                selectedCards.push(this);
+                this.children[0].classList.remove('hide');
+                
+                // match
+                if(selectedCards.length === 2) {
+                    if(this.children[0].textContent === selectedCards[0].children[0].textContent) {
+                        matches++;
+                        turn++;
+    
+                        const contBtn = document.createElement('button');
+                        contBtn.setAttribute('type', 'button');
+                        contBtn.textContent = "Continue";
+                        gameField.appendChild(contBtn);
+                        contBtn.addEventListener('click', function nextTurn() {
+                            document.querySelector('#turnCounter').textContent = `TURN ${turn}/${maxTurns}`;
+                            document.querySelector('button.continue-btn').remove();
+                        });
+                        selectedCards.splice(0, selectedCards.length);
+                    // no match, reset
+                    } else {
+                        // clear list of selected, turn over cards
+                        turn++;
+                        const contBtn = document.createElement('button');
+                        contBtn.setAttribute('type', 'button');
+                        contBtn.setAttribute('class', 'continue-btn');
+                        contBtn.textContent = "Continue";
+                        gameField.appendChild(contBtn);
+                        contBtn.addEventListener('click', function nextTurn() {
+                            for(const c of selectedCards) {
+                                document.querySelector('#turnCounter').textContent = `TURN ${turn}/${maxTurns}`;
+                                c.children[0].classList.add('hide');
+                            }
+                            selectedCards.splice(0, selectedCards.length);
+                            document.querySelector('button.continue-btn').remove();
+                        });
+                    }
+                }
+            });
             gameField.appendChild(cardToAdd);
         }
     }
+    const br = document.createElement('br');
+    gameField.appendChild(br);
 
+    // if turn > maxTurn, hide game and show a restart screen
+    if(turn >= maxTurns && !(matches === cardCount/2)) {
+        document.querySelector('div.game').classList.add('hide');
+        const results = document.querySelector('div.result');
+        results.classList.remove('hide');
+        const h2 = document.createElement('h2');
+        h2.textContent = `YOU LOST :(\n ${turn}/${maxTurns} Turns`;
+        results.appendChild(h2);
+        document.querySelector('button.reset-btn').textContent = "Try Again";
+    }
+
+    // if matches = cardCount/2, show a win screen
 }
 
 function checkPairs(arr) {
+    if(arr.length === 1) { return true; }
+
     const s1 = new Set();
     const s2 = new Set();
 
@@ -55,7 +130,6 @@ function checkPairs(arr) {
             return false;
         }
     }
-
     return s1.size === s2.size;
 }
 
@@ -64,7 +138,7 @@ function verifyFields() {
     const maxTurns = parseInt(document.querySelector('#max-turns').value);
     const cardFaces = document.querySelector('#card-faces').value;
     const presetArray = cardFaces.split(',');
-    
+    console.log(presetArray.length);
 
     // clear old messages
     const oldMessages = document.querySelectorAll('div.error-message > p');
@@ -91,7 +165,7 @@ function verifyFields() {
         err.appendChild(p);
     }
 
-    if(presetArray.length !== cardCount) {
+    if(presetArray.length !== cardCount && presetArray.length !== 1) {
         document.querySelector('div.start').classList.add('hide');
         err.classList.remove("hide");
         const p = document.createElement('p');
@@ -114,7 +188,12 @@ function verifyFields() {
 }
 
 function goBack() {
-    // clear old game elements?
+    document.querySelector('div.reset').classList.add('hide');
+    document.querySelector('div.error-message').classList.add('hide');
+    document.querySelector('div.start').classList.remove('hide');
+}
+
+function reset() {
     const oldCards = document.querySelectorAll('div.game > div.card');
     if(oldCards.length > 0) {
         for(const e of oldCards) {
@@ -122,8 +201,9 @@ function goBack() {
         }
     }
 
-    document.querySelector('div.error-message, div.reset').classList.add('hide');
     document.querySelector('div.start').classList.remove('hide');
+    document.querySelector('div.reset').classList.add('hide');
+    document.querySelector('div.error-message').classList.add('hide');
 }
 
 function main() {
@@ -138,7 +218,7 @@ function main() {
     errorBtn.addEventListener('click', goBack);
     
     const resetBtn = document.querySelector('button.reset-btn');
-    resetBtn.addEventListener('click', goBack);
+    resetBtn.addEventListener('click', reset);
 
 }
 
