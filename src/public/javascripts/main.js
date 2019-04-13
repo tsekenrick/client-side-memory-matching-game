@@ -1,5 +1,17 @@
 // main.js
+function createCard(eleName, attrObj) {
+    const ele = document.createElement(eleName);
+    for(const entry of Object.entries(attrObj)) {
+        ele.setAttribute(entry[0], entry[1]);
+    }
+    const p = document.createElement('p');
+    ele.appendChild(p);
+
+    return ele;
+}
+
 function startGame(cardCount, maxTurns, cardFaces) {
+
     // hide and reveal appropriate elements
     const toShow = document.querySelectorAll('div.game, div.reset');
     for(const e of toShow) {
@@ -7,7 +19,27 @@ function startGame(cardCount, maxTurns, cardFaces) {
     }
     document.querySelector('div.start').classList.add('hide');
 
+    // finds optimal tiling configuration
+    let rowCount = Math.floor(Math.sqrt(cardCount));
+    while(cardCount/rowCount % 1 !== 0) {
+        rowCount--;
+    }
+    const colCount = cardCount/rowCount;
     
+
+    const gameField = document.querySelector('div.game');
+    for(let i = 0; i < rowCount; i++) {
+        const br = document.createElement('br');
+        gameField.appendChild(br);
+        for(let j = 0; j < colCount; j++) {
+            const cardToAdd = createCard('div', {'class': 'card'});
+            const rand = cardFaces[Math.floor(Math.random() * cardFaces.length)];
+            cardFaces.splice(cardFaces.indexOf(rand), 1);
+            cardToAdd.children[0].textContent = rand;
+            gameField.appendChild(cardToAdd);
+        }
+    }
+
 }
 
 function checkPairs(arr) {
@@ -40,7 +72,7 @@ function verifyFields() {
     for(const m of oldMessages) {
         m.remove();
     }
-
+    
     // verify input validity
     const err = document.querySelector('div.error-message');
     if(cardCount <= 2 || cardCount > 36 || cardCount % 2 !== 0) {
@@ -76,13 +108,21 @@ function verifyFields() {
     }
 
     if(err.childElementCount === 1) {
-        startGame(cardCount, maxTurns, cardFaces);
+        startGame(cardCount, maxTurns, presetArray);
     }
 
 }
 
 function goBack() {
-    document.querySelector('div.error-message').classList.add('hide');
+    // clear old game elements?
+    const oldCards = document.querySelectorAll('div.game > div.card');
+    if(oldCards.length > 0) {
+        for(const e of oldCards) {
+            e.remove();
+        }
+    }
+
+    document.querySelector('div.error-message, div.reset').classList.add('hide');
     document.querySelector('div.start').classList.remove('hide');
 }
 
@@ -96,6 +136,10 @@ function main() {
 
     const errorBtn = document.querySelector('button.error-btn');
     errorBtn.addEventListener('click', goBack);
+    
+    const resetBtn = document.querySelector('button.reset-btn');
+    resetBtn.addEventListener('click', goBack);
+
 }
 
 document.addEventListener("DOMContentLoaded", main);
