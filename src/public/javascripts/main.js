@@ -10,7 +10,7 @@ function createCard(eleName, attrObj) {
     return ele;
 }
 
-function startGame(cardCount, maxTurns, cardFaces) {
+function startGame(cardCount, maxTurns, cardFaces, isPreset) {
     document.querySelector('button.reset-btn').textContent = "Quit";
 
     // gameplay variables
@@ -52,17 +52,26 @@ function startGame(cardCount, maxTurns, cardFaces) {
         gameField.appendChild(br);
         for(let j = 0; j < colCount; j++) {
             const cardToAdd = createCard('div', {'class': 'card'});
-            const rand = cardFaces[Math.floor(Math.random() * cardFaces.length)];
-            cardFaces.splice(cardFaces.indexOf(rand), 1);
-            cardToAdd.children[0].textContent = rand;
+
+            if(isPreset) {
+                const content = cardFaces[0];
+                cardFaces.splice(0, 1);
+                cardToAdd.children[0].textContent = content;
+            } else {
+                const rand = cardFaces[Math.floor(Math.random() * cardFaces.length)];
+                cardFaces.splice(cardFaces.indexOf(rand), 1);
+                cardToAdd.children[0].textContent = rand;
+            }
+            
             cardToAdd.children[0].classList.add('hide');
             cardToAdd.addEventListener('click', function selectCard() {
+                if(selectedCards.length === 2) { return; }
                 selectedCards.push(this);
                 this.children[0].classList.remove('hide');
                 
-                // match
                 if(selectedCards.length === 2) {
-                    if(this.children[0].textContent === selectedCards[0].children[0].textContent) {
+                    // match
+                    if(selectedCards[1].children[0].textContent === selectedCards[0].children[0].textContent) {
                         matches++;
                         turn++;
     
@@ -74,8 +83,9 @@ function startGame(cardCount, maxTurns, cardFaces) {
                         contBtn.addEventListener('click', function nextTurn() {
                             document.querySelector('#turnCounter').textContent = `TURN ${turn}/${maxTurns}`;
                             document.querySelector('button.continue-btn').remove();
+                            selectedCards.splice(0, selectedCards.length);
                         });
-                        selectedCards.splice(0, selectedCards.length);
+                        
                     // no match, reset
                     } else {
                         // clear list of selected, turn over cards
@@ -95,7 +105,7 @@ function startGame(cardCount, maxTurns, cardFaces) {
                         });
                     }
                     
-
+                    // win/loss conditions
                     if(matches === cardCount / 2) {
                         document.querySelector('div.game').classList.add('hide');
                         const results = document.querySelector('div.result');
@@ -122,8 +132,6 @@ function startGame(cardCount, maxTurns, cardFaces) {
     }
     const br = document.createElement('br');
     gameField.appendChild(br);
-
-    // if matches = cardCount/2, show a win screen
 }
 
 function checkPairs(arr) {
@@ -149,15 +157,13 @@ function verifyFields() {
     const maxTurns = parseInt(document.querySelector('#max-turns').value);
     const cardFaces = document.querySelector('#card-faces').value;
     const presetArray = cardFaces.split(',');
-    console.log(presetArray.length);
-
-    // clear old messages
+    
     const oldMessages = document.querySelectorAll('div.error-message > p');
     document.querySelector('div.start').classList.remove('hide');
     for(const m of oldMessages) {
         m.remove();
     }
-    
+
     // verify input validity
     const err = document.querySelector('div.error-message');
     if(cardCount <= 2 || cardCount > 36 || cardCount % 2 !== 0) {
@@ -192,26 +198,23 @@ function verifyFields() {
         err.appendChild(p);
     }
 
-    if(err.childElementCount === 1) {
-        startGame(cardCount, maxTurns, presetArray);
+    if(err.childElementCount === 1 && presetArray.length === cardCount) {
+        startGame(cardCount, maxTurns, presetArray, true);
+    } else if(err.childElementCount === 1 && presetArray.length <= 1) {
+        startGame(cardCount, maxTurns, presetArray, false);
     }
 
 }
 
-function goBack() {
-    document.querySelector('div.reset').classList.add('hide');
-    document.querySelector('div.error-message').classList.add('hide');
-    document.querySelector('div.result').classList.add('hide');
-
-    document.querySelector('div.start').classList.remove('hide');
-}
-
 function reset() {
-    const oldCards = document.querySelectorAll('div.game > div.card');
-    if(oldCards.length > 0) {
-        for(const e of oldCards) {
-            e.remove();
-        }
+    const oldCards = document.querySelector('div.game');
+    while(oldCards.firstChild) {
+        oldCards.removeChild(oldCards.firstChild);
+    }
+
+    const oldResults = document.querySelector('div.result');
+    while(oldResults.firstChild) {
+        oldResults.removeChild(oldResults.firstChild);
     }
 
     document.querySelector('div.reset').classList.add('hide');
@@ -231,7 +234,7 @@ function main() {
     startBtn.addEventListener('click', verifyFields);
 
     const errorBtn = document.querySelector('button.error-btn');
-    errorBtn.addEventListener('click', goBack);
+    errorBtn.addEventListener('click', reset);
     
     const resetBtn = document.querySelector('button.reset-btn');
     resetBtn.addEventListener('click', reset);
