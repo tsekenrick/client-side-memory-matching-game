@@ -68,6 +68,7 @@ function startGame(cardCount, maxTurns, cardFaces) {
     
                         const contBtn = document.createElement('button');
                         contBtn.setAttribute('type', 'button');
+                        contBtn.setAttribute('class', 'continue-btn');
                         contBtn.textContent = "Continue";
                         gameField.appendChild(contBtn);
                         contBtn.addEventListener('click', function nextTurn() {
@@ -93,6 +94,27 @@ function startGame(cardCount, maxTurns, cardFaces) {
                             document.querySelector('button.continue-btn').remove();
                         });
                     }
+                    
+
+                    if(matches === cardCount / 2) {
+                        document.querySelector('div.game').classList.add('hide');
+                        const results = document.querySelector('div.result');
+                        results.classList.remove('hide');
+                        const h2 = document.createElement('h2');
+                        h2.textContent = `YOU WON! :)\n ${turn}/${maxTurns} Turns`;
+                        results.appendChild(h2);
+                        document.querySelector('button.reset-btn').textContent = "Another Round";
+
+                    } else if(turn >= maxTurns) {
+                        document.querySelector('div.game').classList.add('hide');
+                        const results = document.querySelector('div.result');
+                        results.classList.remove('hide');
+                        const h2 = document.createElement('h2');
+                        h2.textContent = `YOU LOST :(\n ${turn}/${maxTurns} Turns`;
+                        results.appendChild(h2);
+                        document.querySelector('button.reset-btn').textContent = "Try Again";
+                    }
+
                 }
             });
             gameField.appendChild(cardToAdd);
@@ -100,17 +122,6 @@ function startGame(cardCount, maxTurns, cardFaces) {
     }
     const br = document.createElement('br');
     gameField.appendChild(br);
-
-    // if turn > maxTurn, hide game and show a restart screen
-    if(turn >= maxTurns && !(matches === cardCount/2)) {
-        document.querySelector('div.game').classList.add('hide');
-        const results = document.querySelector('div.result');
-        results.classList.remove('hide');
-        const h2 = document.createElement('h2');
-        h2.textContent = `YOU LOST :(\n ${turn}/${maxTurns} Turns`;
-        results.appendChild(h2);
-        document.querySelector('button.reset-btn').textContent = "Try Again";
-    }
 
     // if matches = cardCount/2, show a win screen
 }
@@ -190,6 +201,8 @@ function verifyFields() {
 function goBack() {
     document.querySelector('div.reset').classList.add('hide');
     document.querySelector('div.error-message').classList.add('hide');
+    document.querySelector('div.result').classList.add('hide');
+
     document.querySelector('div.start').classList.remove('hide');
 }
 
@@ -201,9 +214,12 @@ function reset() {
         }
     }
 
-    document.querySelector('div.start').classList.remove('hide');
     document.querySelector('div.reset').classList.add('hide');
     document.querySelector('div.error-message').classList.add('hide');
+    document.querySelector('div.result').classList.add('hide');
+
+    document.querySelector('div.start').classList.remove('hide');
+
 }
 
 function main() {
